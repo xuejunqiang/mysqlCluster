@@ -1,0 +1,384 @@
+#!/bin/bash
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+ stty erase '^H'
+# Check if user is root
+if [ $(id -u) != "0" ]; then
+    echo "Error: You must be root to run this script, please use root to install mysql cluster"
+    exit 1
+fi
+clear
+echo "=================================================================================="
+echo "mysql cluster 7.3.5  xjq for centos/redhat linux !!!!!!!!!!!!!!!!"
+echo "Send me email if you have any questions  : x.ue2008@163.com or 1362832155(qq) "
+echo "Before installation,please read readme!!!! "
+echo "=================================================================================="
+my_dir=$(pwd)
+long_bit=$(getconf LONG_BIT)
+get_char()
+	{
+	SAVEDSTTY=`stty -g`
+	stty -echo
+	stty cbreak
+	dd if=/dev/tty bs=1 count=1 2> /dev/null
+	stty -raw
+	stty echo
+	stty $SAVEDSTTY
+	}
+	echo ""
+	echo "Press any key to start...or Press Ctrl+c to cancel"
+	char=`get_char`
+
+if [ -s ./mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz ]; then
+	  echo "mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz  [found]"
+	else
+	  echo "mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz  not found!!!Now downloading .......... "
+ 	 wget  http://dev.mysql.com/get/Downloads/MySQL-Cluster-7.3/mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz	
+fi
+while :
+do
+read -p "Please enter the IP management node:" mgmIp	
+	if [ ! -n "$mgmIp" ];then
+		echo "The management node IP is null,please inputt again"
+	else
+	break 
+	fi
+done
+
+while :
+do
+read -p "Please enter the IP data     node 1:" dataMIp1	
+	if [ ! -n "$dataMIp1" ];then
+		echo "The data node IP 1 is null ,please input again"
+	else
+	break
+	fi
+done
+
+while :
+do
+read -p "Please enter the IP data     node 2:" dataMIp2	
+	if [ ! -n "$dataMIp2" ];then
+		echo "The data node IP 2 is null ,please input again"
+	else
+	break
+	fi
+done
+
+
+while :
+do
+read -p "Please enter the IP sql     node 1:" sqlMIp1	
+	if [ ! -n "$sqlMIp1" ];then
+		echo "The sql node IP 1 is null ,please input again"
+	else
+	break
+	fi
+done
+while :
+do
+read -p "Please enter the IP sql     node 2:" sqlMIp2	
+	if [ ! -n "$sqlMIp2" ];then
+		echo "The  sql node IP 2 is null ,please input again"
+	else
+	break
+	fi
+done
+echo ""
+echo ""
+
+		echo "The management     node IP is: $mgmIp"
+		echo "The  data        node IP 1 is: $dataMIp1" 
+		echo "The  data        node IP 2 is: $dataMIp2" 
+		echo "The  sql         node IP 1 is: $sqlMIp1" 
+		echo "The  sql         node IP 2 is: $sqlMIp2" 
+
+echo "The mysql_cluster  start install"
+	get_char()
+        {
+        SAVEDSTTY=`stty -g`
+        stty -echo
+        stty cbreak
+        dd if=/dev/tty bs=1 count=1 2> /dev/null
+        stty -raw
+        stty echo
+        stty $SAVEDSTTY
+        }
+        echo ""
+        echo "Press any key to start The mysql_cluster start install or Press Ctrl+c to cancel"
+        char=`get_char`
+
+function installInit()
+{
+	if [ $long_bit -eq 64 ];then
+		cd $my_dir
+		rpm -ivh sshpass-1.05-5.el6.art.x86_64.rpm >/dev/null
+		echo  "sshpass  install ok "
+	else
+		yum -y localinstall sshpass-1.05-9.1.i686.rpm >/dev/null 
+		echo  "sshpass  install ok "
+	fi
+	while :
+	do
+	echo " Please enter the $mgmIp password" 
+	read -p "Please enter the password management node:" mgm_pd
+		if [ ! -n "$mgm_pd" ];then
+		 	echo "mgm password is null ,please input again!"
+		else
+			  /usr/bin/sshpass -p "$mgm_pd" ssh $mgmIp  "ls"
+				if [ $? -eq 0 ];then
+					echo "Enter the secret is ok "
+				else
+					echo "Please enter th secret error,please input again!"
+					continue
+				fi
+						
+			break
+		fi
+	done
+
+	while :
+	do
+	echo " Please enter the $dataMIp1 password" 
+	read -p "Please enter the password data1 node:" dataMIp1_pd
+		if [ ! -n "$dataMIp1_pd" ];then
+		 	echo "mgm password is null ,please input again!"
+		else
+			  /usr/bin/sshpass -p "$dataMIp1_pd" ssh $dataMIp1  "ls"
+				if [ $? -eq 0 ];then
+					echo "Enter the secret is ok "
+				else
+					echo "Please enter th secret error,please input again!"
+					continue
+				fi
+						
+			break
+		fi
+	done
+
+ 	  while :
+        do
+        echo " Please enter the $dataMIp2 password" 
+        read -p "Please enter the password data1 node:" dataMIp2_pd
+                if [ ! -n "$dataMIp2_pd" ];then
+                        echo "mgm password is null ,please input again!"
+                else
+                          /usr/bin/sshpass -p "$dataMIp2_pd" ssh $dataMIp2  "ls"
+                                if [ $? -eq 0 ];then
+                                        echo "Enter the secret is ok "
+                                else
+                                        echo "Please enter th secret error,please input again!"
+                                        continue
+                                fi
+                        break
+                fi
+        done
+	
+
+	while :
+	do
+	echo " Please enter the $sqlMIp1 password" 
+	read -p "Please enter the password sql1 node:" sqlMIp1_pd
+		if [ ! -n "$sqlMIp1_pd" ];then
+		 	echo "Mgm password is null ,please input again!"
+		else
+			  /usr/bin/sshpass -p "$sqlMIp1_pd" ssh $sqlMIp1  "ls"
+				if [ $? -eq 0 ];then
+					echo "Enter the secret is ok "
+				else
+					echo "Please enter th secret error,please input again!"
+					continue
+				fi
+						
+			break
+		fi
+	done
+	while :
+	do
+	echo " Please enter the $sqlMIp2 password" 
+	read -p "Please enter the password sql2 node:" sqlMIp2_pd
+		if [ ! -n "$sqlMIp2_pd" ];then
+		 	echo "mgm password is null ,please input again!"
+		else
+			  /usr/bin/sshpass -p "$sqlMIp2_pd" ssh $sqlMIp1  "ls"
+				if [ $? -eq 0 ];then
+					echo "Enter the secret is ok "
+				else
+					echo "Please enter th secret error,please input again!"
+					continue
+				fi
+						
+			break
+		fi
+	done
+	#mgm
+	sshpass -p "$mgm_pd" ssh  $mgmIp "yum makecache"
+	sshpass -p "$mgm_pd" ssh  $mgmIp "yum -y remove mysql mysql-devel"
+	sshpass -p "$mgm_pd" ssh  $mgmIp "groupadd mysql && useradd -g mysql mysql && chkconfig iptables off && service iptables stop "
+	sshpass -p "$mgm_pd" ssh  $mgmIp "sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config"
+	sshpass -p "$mgm_pd" scp mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz  $mgmIp:/root/ 
+	#date1
+	sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "yum makecache"
+	sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "yum -y remove mysql mysql-devel"
+	sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "groupadd mysql && useradd -g mysql mysql && chkconfig iptables off && service iptables stop "
+	sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config"
+	sshpass -p "$dataMIp1_pd" scp mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz  $dataMIp1:/root/ 
+	#date2
+     sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "yum makecache"
+        sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "yum -y remove mysql mysql-devel"
+        sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "groupadd mysql && useradd -g mysql mysql && chkconfig iptables off && service iptables stop "
+        sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config"
+        sshpass -p "$dataMIp2_pd" scp mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz  $dataMIp2:/root/
+	#sql1
+     sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "yum makecache"
+        sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "yum -y remove mysql mysql-devel"
+        sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "groupadd mysql && useradd -g mysql mysql && chkconfig iptables off && service iptables stop "
+        sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config"
+        sshpass -p "$sqlMIp1_pd" scp mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz  $sqlMIp1:/root/
+	#sql2
+     sshpass -p "$sqlMIp2_pd" ssh  $sqlMIp2 "yum makecache"
+        sshpass -p "$sqlMIp2_pd" ssh  $sqlMIp2 "yum -y remove mysql mysql-devel"
+        sshpass -p "$sqlMIp2_pd" ssh  $sqlMIp2 "groupadd mysql && useradd -g mysql mysql && chkconfig iptables off && service iptables stop "
+        sshpass -p "$sqlMIp2_pd" ssh  $sqlMIp2 "sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config"
+        sshpass -p "$sqlMIp2_pd" scp mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz  $sqlMIp2:/root/
+#	sshpass -p "$mgm_pd" ssh  $mgmIp "yum makecache"
+#	sshpass -p "$mgm_pd" ssh  $mgmIp "yum makecache"
+#	sshpass -p "$mgm_pd" ssh  $mgmIp "yum makecache"
+}
+
+function mysqlCluster()
+{
+  echo "======================================== install management start================================================================"
+	sshpass -p "$mgm_pd" ssh  $mgmIp "cd /root && tar xvf mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz && mv mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64 /usr/local/mysql-cluster && chown -R mysql.mysql /usr/local/mysql-cluster/"
+	sshpass -p "$mgm_pd" ssh  $mgmIp "cat >/usr/local/mysql-cluster/config.ini<<EOF
+[ndbd default]
+NoOfReplicas=2
+DataMemory=512M
+IndexMemory=256M
+
+[ndb_mgmd]
+NodeId=1
+hostname=$mgmIp
+datadir=/var/lib/mysql-cluster
+
+[ndbd]
+NodeId=2
+hostname=$dataMIp1
+datadir=/usr/local/mysql-cluster/ndbdata
+
+[ndbd]
+NodeId=3
+hostname=$dataMIp2
+datadir=/usr/local/mysql-cluster/ndbdata
+
+[mysqld]
+NodeId=4
+hostname=$sqlMIp1
+
+[mysqld]
+NodeId=5
+hostname=$sqlMIp2
+EOF
+"
+ sshpass -p "$mgm_pd" ssh  $mgmIp "mkdir /var/lib/mysql-cluster && mkdir -p /usr/local/mysql/mysql-cluster && ln -s /usr/local/mysql-cluster/bin/* /usr/bin/ "
+
+
+ echo "======================================== install management end================================================================"
+ echo "======================================== install date  start================================================================"
+	sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "cd /root && tar xvf mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz && mv mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64 /usr/local/mysql-cluster && chown -R mysql.mysql /usr/local/mysql-cluster/"
+	sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "cd /root && tar xvf mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz && mv mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64 /usr/local/mysql-cluster && chown -R mysql.mysql /usr/local/mysql-cluster/"
+ sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "mv /etc/my.cnf /etc/my.cnf.bak"
+ sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "cat >/etc/my.cnf<<EOF
+[mysqld]
+datadir=/usr/local/mysql-cluster/data
+ndbcluster
+ndb-connectstring=$mgmIp
+user=mysql
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+[mysql_cluster]
+ndb-connectstring=$mgmIp
+EOF
+"
+sshpass -p "$dataMIp1_pd" ssh  $dataMIp1 "chown -R mysql:mysql /usr/local/mysql-cluster/ &&  ln -s /usr/local/mysql-cluster/bin/* /usr/bin/ "
+
+ sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "mv /etc/my.cnf /etc/my.cnf.bak"
+ sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "cat >/etc/my.cnf<<EOF
+[mysqld]
+datadir=/usr/local/mysql-cluster/data
+ndbcluster
+ndb-connectstring=$mgmIp
+user=mysql
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+[mysql_cluster]
+ndb-connectstring=$mgmIp
+EOF
+"
+sshpass -p "$dataMIp2_pd" ssh  $dataMIp2 "chown -R mysql:mysql /usr/local/mysql-cluster/ &&  ln -s /usr/local/mysql-cluster/bin/* /usr/bin/ "
+
+ echo "======================================== install date  end================================================================"
+ echo "======================================== install sql  start================================================================"
+	sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "cd /root && tar xvf mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz && mv mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64 /usr/local/mysql && chown -R mysql.mysql /usr/local/mysql/"
+	sshpass -p "$sqlMIp2_pd" ssh  $sqlMIp2 "cd /root && tar xvf mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz && mv mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64 /usr/local/mysql && chown -R mysql.mysql /usr/local/mysql/"
+ sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "mv /etc/my.cnf /etc/my.cnf.bak"
+ sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "cd /usr/local/mysql && ./scripts/mysql_install_db --user=mysql --explicit_defaults_for_timestamp && mv my.cnf my.cnf.bak &&  ln -s /usr/local/mysql/bin/* /usr/bin/ && \cp support-files/mysql.server  /etc/init.d/mysqld "
+sshpass -p "$sqlMIp1_pd" ssh  $sqlMIp1 "cat >/usr/local/mysql/my.cnf<<EOF
+[mysqld]
+ndbcluster
+ndb-connectstring=$mgmIp
+[mysql_cluster]
+ndb-connectstring=$mgmIp
+EOF
+"
+
+ sshpass -p "$sqlMIp2_pd" ssh  $sqlMIp2 "cd /usr/local/mysql && ./scripts/mysql_install_db --user=mysql --explicit_defaults_for_timestamp && mv my.cnf my.cnf.bak &&  ln -s /usr/local/mysql/bin/* /usr/bin/  && \cp support-files/mysql.server  /etc/init.d/mysqld"
+sshpass -p "$sqlMIp2_pd" ssh  $sqlMIp2 "cat >/usr/local/mysql/my.cnf<<EOF
+[mysqld]
+ndbcluster
+ndb-connectstring=$mgmIp
+[mysql_cluster]
+ndb-connectstring=$mgmIp
+EOF
+"
+ echo "======================================== install sql  end================================================================"
+
+}
+function CheckInstall (){
+echo "===================================== Check install ==================================="
+echo "Checking..... "
+sshpass -p "$mgm_pd" ssh  $mgmIp "if [ -s /usr/local/mysql-cluster ] && [ -s /usr/local/mysql-cluster/config.ini ];then 
+	echo "mgm:OK";
+	else 
+		echo "Error: /usr/local/mysql-cluster  not found!!! mgm install failed.";
+	fi
+ "
+sshpass -p "$dataMIp1_pd" ssh $dataMIp1 "if [ -s /usr/local/mysql-cluster ] && [ -s /etc/my.cnf ];then echo "data1:OK";else 
+	echo "data1 install failed"; fi	"
+
+sshpass -p "$dataMIp2_pd" ssh $dataMIp2 "if [ -s /usr/local/mysql-cluster ] && [ -s /etc/my.cnf ];then echo "data2:OK";else 
+	echo "data2 install failed"; fi	"
+sshpass -p "$sqlMIp1_pd" ssh $sqlMIp1 "if [ -s /usr/local/mysql ] && [ -s /usr/local/mysql/my.cnf ];then echo "sql1:OK";else
+	echo "sql1 install failed"; fi "
+sshpass -p "$sqlMIp2_pd" ssh $sqlMIp2 "if [ -s /usr/local/mysql ] && [ -s /usr/local/mysql/my.cnf ];then echo "sql2:OK";else
+	echo "sql2 install failed"; fi "
+echo "=============================Check end , startup mysqlcluster ==========================="
+	sshpass -p "$mgm_pd" ssh  $mgmIp "cd  /usr/local/mysql-cluster && ./bin/ndb_mgmd -f config.ini && netstat -ntlp | grep 1186 ;if [ $? -eq 0 ];then echo "ndb_mgmd start OK \!\!";else echo "ndb_mgmd start failed \!\!" ;fi"
+sshpass -p "$dataMIp1_pd" ssh $dataMIp1 "/usr/local/mysql-cluster/bin/ndbd &&netstat -ntlp |grep ndbd;if [ $? -eq 0 ];then echo "ndbd start OK\!\!\!";else echo "ndbd start failed";fi"
+sshpass -p "$dataMIp2_pd" ssh $dataMIp2 "/usr/local/mysql-cluster/bin/ndbd &&netstat -ntlp |grep ndbd;if [ $? -eq 0 ];then echo "ndbd start OK\!\!\!";else echo "ndbd start failed";fi"
+sshpass -p "$sqlMIp1_pd" ssh $sqlMIp1 "service mysqld restart && chkconfig mysqld on && netstat -ntlp | grep 3306 ;if [ $? -eq 0 ];then echo "mysqld start OK\!" ;else echo "mysqld start failed \!";fi"
+sshpass -p "$sqlMIp2_pd" ssh $sqlMIp2 "service mysqld restart && chkconfig mysqld on && netstat -ntlp | grep 3306 ;if [ $? -eq 0 ];then echo "mysqld start OK\!" ;else echo "mysqld start failed \!";fi"
+echo "===================================startup end===================================================="
+echo "The ndb_mgm path : /usr/local/mysql-cluster "
+echo "The data path:  /usr/local/mysql-cluster"
+echo "The sql Path: /usr/local/mysql"
+echo "startup ndb_mgm :/usr/local/mysql-cluster/bin/ndb_mgmd -f config.ini"	
+echo "startup data : /usr/local/mysql-cluster/bin/ndbd"
+echo "start mysql(sql): service mysqld start "
+echo "Thank you for abeting me,I will insist on doing this \\!"
+}
+installInit    2>&1 | tee -a  $my_dir/log/mysqlCluster-init.log
+mysqlCluster  2>&1 | tee -a  $my_dir/log/mysqlCluster-install.log
+CheckInstall 2>&1 | tee -a  $my_dir/log/mysqlCluster-CheckInstall.log

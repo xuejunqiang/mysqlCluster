@@ -1,0 +1,29 @@
+安装本集群不需要安装依赖，不需要编译。
+
+首先明确结构：
+例如：
+
+                192.168.18.230   管理节点
+           
+192.168.18.212   192.168.18.213  SQL节点
+   
+ 192.168.18.214  192.168.18.215   数据节点
+
+安装准备：
+	环境：[root@localhost ~]# cat /etc/redhat-release 
+CentOS release 6.5 (Final)
+各个节点  ：yum makecache  
+ rpm -qa mysql
+yum -y remove mysql mysql-devel
+关闭有源码包安装的
+ps -aux | grep mysql
+停止mysql  去掉开机启动
+ 所有节点：groupadd mysql
+useradd -g mysql mysql
+chkconfig iptables off  service iptables stop  或者开启3306  1186 
+selinux 关闭
+
+下载软件：（可以到mysql官网下载最新软件）
+http://dev.mysql.com/get/Downloads/MySQL-Cluster-7.3/mysql-cluster-gpl-7.3.5-linux-glibc2.5-x86_64.tar.gz
+
+要注意的是：如果用install 安装是通过sshpass去连接所有mysql集群主机的，但是有可能系统不支持的时候，可以执行install.sh
